@@ -1,77 +1,25 @@
 import React, { Component } from 'react';
-import ContactsForm from './contactsForm/ContactsForm';
-import ContactsList from './contactsList/ContactsList';
-import Filter from './filter/Filter';
-import shortid from 'shortid';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import ImageGallery from './imageGallery/ImageGallery';
+import Searchbar from './searchbar/Searchbar';
+import 'react-loader-spinner/dist/loader/css/react-spinner-loader.css';
 
 class App extends Component {
   state = {
-    contacts: [],
-    filter: '',
+    key: '22773171-6fe03cddc33c3049d7faab277',
+    query: '',
   };
-  componentDidMount() {
-    const savedContacts = JSON.parse(localStorage.getItem('contacts'));
-    if (savedContacts) {
-      this.setState({ contacts: savedContacts });
-    }
-  }
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
-
-  addContact = number => {
-    const searchRepeat = this.state.contacts
-      .map(user => user.name.toLowerCase())
-      .includes(number.name.toLowerCase());
-
-    if (searchRepeat) {
-      alert(`${number.name} is already in contacts`);
-    } else {
-      const contact = {
-        ...number,
-        id: shortid.generate(),
-      };
-      this.setState(prev => ({ contacts: [...prev.contacts, contact] }));
-    }
-  };
-
-  getFilteredContacts = () => {
-    const normalizedFilter = this.state.filter.toLowerCase();
-
-    return this.state.contacts.filter(contact =>
-      contact.name.toLowerCase().includes(normalizedFilter),
-    );
-  };
-
-  changeFilter = filter => {
-    this.setState({ filter });
-  };
-
-  removeContact = contactId => {
-    this.setState(prevState => {
-      return {
-        contacts: prevState.contacts.filter(({ id }) => id !== contactId),
-      };
-    });
+  handleFormSubmit = query => {
+    this.setState({ query });
   };
 
   render() {
-    const { filter } = this.state;
     return (
       <>
-        <div>
-          <h1>Phonebook</h1>
-          <ContactsForm addContact={this.addContact} />
-
-          <h2>Contacts</h2>
-          <Filter value={filter} onChangeFilter={this.changeFilter} />
-          <ContactsList
-            contacts={this.getFilteredContacts()}
-            onRemoveContact={this.removeContact}
-          />
-        </div>
+        <Searchbar onSubmit={this.handleFormSubmit} />
+        <ImageGallery query={this.state.query} />
+        <ToastContainer autoClose={3000} />
       </>
     );
   }
