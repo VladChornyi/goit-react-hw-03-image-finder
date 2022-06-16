@@ -1,47 +1,26 @@
 import React, { Component } from 'react';
 import Loader from 'react-loader-spinner';
-import { getImagesApi } from '../../utils/serviceAPI';
+import { connect } from 'react-redux';
+import { getImagesRequest, getMoreImagesRequest } from '../../redux/imagesSlice';
+import { getImages } from '../../redux/selectors';
 import Modal from '../modal/Modal';
 
 class ImageGallery extends Component {
   state = {
     page: 1,
     perPage: 12,
-    images: [],
-    loading: false,
     largeImgURL: '',
     isOpenModal: false,
   };
-
   componentDidUpdate(prevProps, prevState) {
     if (prevProps.query !== this.props.query) {
-      this.getImages({ query: this.props.query });
-      this.setState({ page: 1, images: [] });
+      this.setState({ page: 1 });
+      this.props.getImagesRequest({ query: this.props.query, page: 1 });
     }
     if (prevState.page !== this.state.page && this.state.page !== 1) {
-      this.getImages({ query: this.props.query, page: this.state.page });
+      this.props.getMoreImagesRequest({ query: this.props.query, page: this.state.page });
     }
   }
-  getImages = ({ page, query }) => {
-    this.setState({ loading: true });
-    getImagesApi({ query, page })
-      .then(pictures =>
-        this.setState(prev => ({
-          images: [...prev.images, ...pictures],
-          length: pictures.totalHits,
-        })),
-      )
-      .finally(() => {
-        this.setState({ loading: false });
-        if (page > 1) {
-          window.scrollTo({
-            top: document.documentElement.scrollHeight,
-            behavior: 'smooth',
-          });
-        }
-      });
-  };
-
   handleLoadMore = () => {
     this.setState(prev => ({ page: prev.page + 1 }));
   };
@@ -52,13 +31,12 @@ class ImageGallery extends Component {
     this.setState({ largeImgURL });
   };
   render() {
-    const { loading, images, isOpenModal, largeImgURL } = this.state;
+    const { loading, images, isOpenModal, largeImgURL, totalImages } = this.props.images;
     return (
       <>
         {loading && (
           <Loader type="BallTriangle" color="#00BFFF" height={80} width={80} timeout={3000} />
         )}
-        {/* {!length && <h1>Введите корректные данные запроса</h1>} */}
         {images.length > 0 && (
           <ul className="ImageGallery">
             {images.map(image => (
@@ -76,7 +54,12 @@ class ImageGallery extends Component {
 
         {isOpenModal && <Modal largeImageURL={largeImgURL} closeModal={this.toggleModal} />}
         {images.length > 1 && (
-          <button className="Button" type="button" onClick={this.handleLoadMore}>
+          <button
+            className="Button"
+            type="button"
+            onClick={this.handleLoadMore}
+            disabled={totalImages === images.length}
+          >
             Load more
           </button>
         )}
@@ -85,4 +68,5 @@ class ImageGallery extends Component {
   }
 }
 
-export default ImageGallery;
+const mapStateToProps = state => ({ images: getImages(state) });
+export default connect(mapStateToProps, { getImagesRequest, getMoreImagesRequest })(ImageGallery);
